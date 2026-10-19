@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Bouncle — daily trick shots</title>
+  <meta name="description" content="New trick-shot challenges every day, plus 100 Adventure levels. Land the ball in the cup in as few shots as you can, then challenge your friends.">
+  <meta name="theme-color" content="#5a47c8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- After the app is live, add your App Store id to show Safari's "Get the app" banner:
+  <meta name="apple-itunes-app" content="app-id=0000000000"> -->
+  <meta property="og:title" content="Bouncle — daily trick shots">
+  <meta property="og:description" content="Same level for everyone. Fewest shots wins. Can you beat my score?">
+  <meta property="og:image" content="assets/img/og-image.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/img/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/img/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Game board"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hud" hidden>
+    <div class="chip glass col" id="hud-day"><b id="hud-title">DAY 1</b><span id="hud-sub">Toybox · Easy</span></div>
+    <div class="chip glass" id="hud-shots"><span>SHOTS</span><b id="hud-shotsn">0</b><span class="par" id="hud-par">PAR 3</span></div>
+  </div>
+  <div id="trickchip" class="trickchip glass" hidden><span class="tk-icon"></span><span id="trick-text">Hit 2 bumpers</span><b id="trick-prog">0/2</b></div>
+
+  <div id="bottombar" class="bottombar" hidden>
+    <button class="iconbtn glass" id="btn-menu" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="dots" id="shotdots"></div>
+    <div class="target glass" id="startarget" hidden></div>
+    <div class="bb-right">
+      <button class="iconbtn glass" id="btn-restart" aria-label="Restart level" hidden><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
+      <button class="iconbtn glass" id="btn-ghosts" aria-label="Friends' ghosts" hidden><span class="ghostcount" id="ghostcount">0</span><svg viewBox="0 0 24 24"><path d="M5 20V11a7 7 0 0 1 14 0v9l-2.3-1.6L14.4 20 12 18.4 9.6 20l-2.3-1.6z"/><circle cx="9.5" cy="11" r="1.2"/><circle cx="14.5" cy="11" r="1.2"/></svg></button>
+    </div>
+  </div>
+
+  <div id="hint" class="hint" hidden>Drag back anywhere to aim · release to shoot</div>
+  <div id="ghostbanner" class="ghostbanner glass" hidden></div>
+  <img id="stamp" class="stamp" alt="" hidden>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- HOME (hub) -->
+  <section id="home" class="screen home" hidden>
+    <div class="home-inner">
+      <img class="logo" src="assets/img/logo.png" alt="Bouncle daily">
+      <div class="today-head"><b>Today</b><span id="home-day">Day 1</span><span class="countdown" id="home-count" hidden></span></div>
+      <div id="challenge" class="challenge glass" hidden></div>
+      <div class="cards">
+        <button class="card glass" id="card-daily">
+          <span class="cicon c-daily"><svg viewBox="0 0 24 24"><path d="M7 21V4"/><path d="M7 4h10l-2.5 3.5L17 11H7"/></svg></span>
+          <span class="ctext"><b>Daily Level</b><small id="cd-daily">Same level for everyone</small></span>
+          <span class="cstat" id="cs-daily">Play</span>
+        </button>
+        <button class="card glass" id="card-oneshot">
+          <span class="cicon c-one"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8"/></svg></span>
+          <span class="ctext"><b>One Shot</b><small id="cd-oneshot">One try. Can you hole it?</small></span>
+          <span class="cstat" id="cs-oneshot">Play</span>
+        </button>
+        <button class="card glass" id="card-trick">
+          <span class="cicon c-trick"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></svg></span>
+          <span class="ctext"><b>Trick Shot</b><small id="cd-trick">Hole it with a twist</small></span>
+          <span class="cstat" id="cs-trick">Play</span>
+        </button>
+      </div>
+      <button class="adv" id="card-adv">
+        <span class="adv-label">ADVENTURE</span>
+        <b id="adv-title">World 1 · Toybox</b>
+        <small id="adv-sub">Level 1 · 0 stars</small>
+        <span class="adv-go" id="adv-go">Start</span>
+      </button>
+      <div class="home-row">
+        <button class="btn ghost" id="btn-how">How to play</button>
+        <button class="btn ghost" id="btn-stats">Stats</button>
+        <button class="btn ghost" id="btn-skins">Balls</button>
+        <button class="iconbtn glass" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3 5.5 5.5"/></svg></button>
+      </div>
+      <div class="streak glass" id="home-streak" hidden><span class="flame"></span><b id="home-streakn">0</b><span>day streak</span></div>
+    </div>
+  </section>
+
+  <!-- ADVENTURE MAP -->
+  <section id="map" class="screen mapscreen" hidden>
+    <div class="maphead">
+      <button class="iconbtn glass" id="map-back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <b>Adventure</b>
+      <span class="mapstars glass" id="map-stars">0</span>
+    </div>
+    <div class="mapscroll" id="mapscroll"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="screen sheetwrap" hidden>
+    <div class="sheet">
+      <div class="grab"></div>
+      <img id="res-stamp" class="res-stamp" alt="">
+      <div class="res-stars" id="res-stars" hidden><i></i><i></i><i></i></div>
+      <div class="res-title" id="res-title">Holed in 2</div>
+      <div class="res-sub" id="res-sub">Day 1 · Par 3</div>
+      <div class="res-trick" id="res-trick" hidden></div>
+      <div class="res-shots" id="res-shots"></div>
+      <div class="res-streak glass" id="res-streak" hidden></div>
+      <div class="res-unlock" id="res-unlock" hidden></div>
+      <div class="btnrow" id="res-row1"></div>
+      <div class="btnrow" id="res-row2"></div>
+      <div class="friends" id="res-friends"></div>
+      <div class="countdown" id="res-count"></div>
+      <div class="links" id="res-links"></div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="stats" class="screen sheetwrap" hidden>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h2>Statistics</h2>
+      <div class="tiles" id="stat-tiles"></div>
+      <h3>Shots to hole it</h3>
+      <div class="bars" id="stat-bars"></div>
+      <button class="btn secondary" data-close>Close</button>
+    </div>
+  </section>
+
+  <!-- SKINS -->
+  <section id="skins" class="screen sheetwrap" hidden>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h2>Balls</h2>
+      <p class="muted">Unlock balls with your daily streak and Adventure stars.</p>
+      <div class="skingrid" id="skingrid"></div>
+      <button class="btn secondary" data-close>Close</button>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="settings" class="screen sheetwrap" hidden>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h2>Settings</h2>
+      <label class="row"><span>Sound effects</span><input type="checkbox" id="set-sound"><i class="sw"></i></label>
+      <label class="row"><span>Music</span><input type="checkbox" id="set-music"><i class="sw"></i></label>
+      <label class="row"><span>Haptics</span><input type="checkbox" id="set-haptics"><i class="sw"></i></label>
+      <label class="row"><span>Reduce motion</span><input type="checkbox" id="set-motion"><i class="sw"></i></label>
+      <label class="row"><span>Your name</span><input type="text" id="set-name" maxlength="14" placeholder="Shown to friends"></label>
+      <div class="links">
+        <button class="link" id="set-how">How to play</button>
+        <a class="link" href="privacy.html" target="_blank" rel="noopener">Privacy</a>
+        <a class="link" href="support.html" target="_blank" rel="noopener">Support</a>
+      </div>
+      <p class="muted small" id="set-version"></p>
+      <button class="btn secondary" data-close>Close</button>
+    </div>
+  </section>
+
+  <!-- NAME PROMPT -->
+  <section id="nameprompt" class="screen sheetwrap" hidden>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h2>What should friends call you?</h2>
+      <p class="muted">Your name travels with your share link so friends know whose ghost they're racing. Nothing is uploaded.</p>
+      <input type="text" id="name-input" class="textin" maxlength="14" placeholder="Your name" autocomplete="nickname">
+      <button class="btn primary" id="name-save">Continue</button>
+    </div>
+  </section>
+
+  <!-- ONBOARDING -->
+  <section id="onboard" class="screen onboard" hidden>
+    <div class="ob-card glass">
+      <div class="ob-view">
+      <div class="ob-slides" id="ob-slides">
+        <div class="ob-slide">
+          <div class="ob-art art-aim"><span class="ob-ball"></span><span class="ob-finger"></span><span class="ob-dots"></span></div>
+          <h2>Drag back to aim</h2>
+          <p>Pull back anywhere on the screen like a slingshot. Let go to shoot.</p>
+        </div>
+        <div class="ob-slide">
+          <div class="ob-art art-cup"><span class="ob-cup"></span><span class="ob-ball drop"></span></div>
+          <h2>Land it in the cup</h2>
+          <p>Bounce off rails, bumpers, spinners and portals. Fewest shots wins. Finish a level, go to the next.</p>
+        </div>
+        <div class="ob-slide">
+          <div class="ob-art art-day"><span class="ob-cal">1</span></div>
+          <h2>New challenges every day</h2>
+          <p>Your first week ramps you up. Then you play the same Daily Level as everyone, plus a One Shot, a Trick Shot and 100 Adventure levels.</p>
+        </div>
+      </div>
+      </div>
+      <div class="ob-dots" id="ob-dots"><i></i><i></i><i></i></div>
+      <button class="btn primary" id="ob-next">Next</button>
+    </div>
+  </section>
+
+  <div id="loading" class="loading"><div class="spinner"></div></div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
